@@ -3,7 +3,7 @@
 Search a collection of images by describing them in Hebrew, or by uploading a similar image.
 The project compares several ways of making CLIP-style image retrieval work in Hebrew and measures them on a standard benchmark.
 
-**Live demo:** [Hugging Face Space](SPACE_URL) · **Data and embeddings:** [ElyKok/hebrew-clip-search-data](https://huggingface.co/datasets/ElyKok/hebrew-clip-search-data)
+**Live demo:** [Hugging Face Space](https://huggingface.co/spaces/ElyKok/hebrew-image-search) · **Data and embeddings:** [ElyKok/hebrew-clip-search-data](https://huggingface.co/datasets/ElyKok/hebrew-clip-search-data)
 
 <!-- Add a GIF of the demo here: it is the first thing a reviewer will look at. -->
 
