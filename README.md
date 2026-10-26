@@ -3,6 +3,8 @@
 Search a collection of images by describing them in Hebrew, or by uploading a similar image.
 The project compares several ways of making CLIP-style image retrieval work in Hebrew and measures them on a standard benchmark.
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ekupinsk/hebrew-image-search/blob/main/hebrew_image_search.ipynb)
+
 **Live demo:** [Hugging Face Space](https://huggingface.co/spaces/ElyKok/hebrew-image-search) · **Data and embeddings:** [ElyKok/hebrew-clip-search-data](https://huggingface.co/datasets/ElyKok/hebrew-clip-search-data)
 
 <!-- Add a GIF of the demo here: it is the first thing a reviewer will look at. -->
@@ -53,14 +55,13 @@ The Hebrew queries were produced by machine-translating the English Flickr30k ca
 
 | File | Purpose |
 |---|---|
-| `hebrew_clip_search_step1.ipynb` | Builds the dataset, translates captions, computes embeddings, runs the evaluation, uploads to Hugging Face |
-| `hebclip_eval_cell.py` | Adds the HebCLIP row to the evaluation |
+| `hebrew_image_search.ipynb` | Builds the dataset, translates captions, computes embeddings, runs the full evaluation, uploads to Hugging Face |
 | `space/app.py` | The Gradio demo: text search and image-to-image search |
 | `space/requirements.txt` | Dependencies for the demo |
 
 ## Running it
 
-1. Open `hebrew_clip_search_step1.ipynb` in Google Colab with a T4 GPU and run all cells (about 20 minutes).
+1. Open `hebrew_image_search.ipynb` in Google Colab (badge above) with a T4 GPU and run all cells (about 20 minutes).
 2. Create a Gradio Space with ZeroGPU hardware and upload the two files from `space/`.
 
 ## Tech stack
