@@ -10,7 +10,7 @@ import spaces
 import torch
 from huggingface_hub import snapshot_download
 from sentence_transformers import SentenceTransformer
-from transformers import MarianMTModel, MarianTokenizer
+from transformers import AutoModel, AutoTokenizer, MarianMTModel, MarianTokenizer
 
 DATA_REPO = "ElyKok/hebrew-clip-search-data"
 # Download into a folder inside the app directory: Gradio only serves files
@@ -31,11 +31,21 @@ clip_l14 = SentenceTransformer("clip-ViT-L-14", device="cuda")
 MT_NAME = "Helsinki-NLP/opus-mt-tc-big-he-en"
 mt_tok = MarianTokenizer.from_pretrained(MT_NAME)
 mt_model = MarianMTModel.from_pretrained(MT_NAME).to("cuda").eval()
+# NVIDIA HebCLIP: Hebrew text encoder aligned to the CLIP L/14 image space
+heb_tok = AutoTokenizer.from_pretrained("nvidia/hebclip-model")
+heb_model = AutoModel.from_pretrained("nvidia/hebclip-model").to("cuda").eval()
 
-# First entry is the default: translate+L14 scored best on Flickr30k (R@1 60.7 vs 30.4)
+
+def rtl(text: str) -> str:
+    # Right-to-left marks around mixed Hebrew/English labels keep the word
+    # order and the brackets correct wherever the label is displayed.
+    return f"\u200f{text}\u200f"
+
+# Ordered by Flickr30k R@1; the first entry is the default.
 METHODS = {
-    "תרגום לאנגלית ואז CLIP L/14 (מדויק יותר)": "translate_l14",
-    "עברית ישירה, CLIP רב-לשוני B/32": "multilingual",
+    rtl("תרגום לאנגלית ואז CLIP L/14 (הכי מדויק)"): "translate_l14",
+    rtl("HebCLIP של NVIDIA, עברית ישירה"): "hebclip",
+    rtl("CLIP רב-לשוני B/32, עברית ישירה"): "multilingual",
 }
 
 
@@ -45,6 +55,13 @@ def encode_query(query: str, method: str):
     if method == "multilingual":
         q = multilingual.encode([query], normalize_embeddings=True, convert_to_numpy=True)
         return q.astype(np.float32), "B32", None
+
+    if method == "hebclip":
+        batch = heb_tok([query], padding=True, truncation=True, max_length=77, return_tensors="pt").to("cuda")
+        with torch.no_grad():
+            emb = heb_model(**batch).last_hidden_state.mean(dim=1)
+        q = torch.nn.functional.normalize(emb, dim=-1).cpu().numpy()
+        return q.astype(np.float32), "L14", None
 
     batch = mt_tok([query], return_tensors="pt", padding=True, truncation=True).to("cuda")
     with torch.no_grad():
@@ -62,7 +79,8 @@ def search(query: str, method_label: str, k: int):
     scores = (img_emb[enc] @ q.T).ravel()
     top = np.argsort(-scores)[: int(k)]
     gallery = [(image_paths[i], f"{scores[i]:.3f}") for i in top]
-    note = f"תרגום: {english}" if english else ""
+    # The English part is isolated left-to-right so its period stays at its end
+    note = f"תרגום: \u2066{english}\u2069" if english else ""
     return gallery, note
 
 
@@ -82,18 +100,12 @@ def search_by_image(image, k: int):
     return [(image_paths[i], f"{scores[i]:.3f}") for i in top]
 
 
-EXAMPLES = [
-    ["כלב רץ על הדשא", list(METHODS)[0], 8],
-    ["ילדים משחקים בחוף הים", list(METHODS)[1], 8],
-    ["אדם רוכב על אופניים ברחוב", list(METHODS)[0], 8],
-    ["שתי נשים מדברות בבית קפה", list(METHODS)[1], 8],
-]
-
 # Right-to-left page; the slider and number boxes stay left-to-right so they
 # still move in the expected direction.
 CSS = """
 .gradio-container { direction: rtl; text-align: right; }
 .gradio-container input[type=range], .gradio-container input[type=number] { direction: ltr; }
+.gradio-container ul.options, .gradio-container ul.options li { direction: rtl; text-align: right; }
 """
 # Gradio 6 takes css in launch(); older versions take it in Blocks().
 css_in_launch = "css" in inspect.signature(gr.Blocks.launch).parameters
@@ -109,7 +121,7 @@ with gr.Blocks(title="חיפוש תמונות בעברית", **blocks_kwargs) as
         with gr.Tab("חיפוש לפי טקסט"):
             with gr.Row():
                 query = gr.Textbox(label="מה לחפש?", placeholder="למשל: כלב רץ על הדשא", rtl=True, scale=4)
-                method = gr.Radio(list(METHODS), value=list(METHODS)[0], label="שיטה", scale=2)
+                method = gr.Dropdown(list(METHODS), value=list(METHODS)[0], label="שיטה", scale=2)
                 k = gr.Slider(4, 16, value=8, step=4, label="מספר תוצאות", scale=1)
             btn = gr.Button("חפש", variant="primary")
             note = gr.Markdown()
@@ -117,7 +129,6 @@ with gr.Blocks(title="חיפוש תמונות בעברית", **blocks_kwargs) as
 
             btn.click(search, [query, method, k], [gallery, note])
             query.submit(search, [query, method, k], [gallery, note])
-            gr.Examples(EXAMPLES, [query, method, k], [gallery, note], fn=search, cache_examples=False)
 
         with gr.Tab("חיפוש לפי תמונה"):
             with gr.Row():
