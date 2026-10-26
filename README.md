@@ -7,7 +7,20 @@ The project compares several ways of making CLIP-style image retrieval work in H
 
 **Live demo:** [Hugging Face Space](https://huggingface.co/spaces/ElyKok/hebrew-image-search) · **Data and embeddings:** [ElyKok/hebrew-clip-search-data](https://huggingface.co/datasets/ElyKok/hebrew-clip-search-data)
 
-<!-- Add a GIF of the demo here: it is the first thing a reviewer will look at. -->
+![Searching "חוף ים" (seaside) with the translate-then-CLIP method](docs/text-search-translate.png)
+
+<details>
+<summary>More screenshots</summary>
+
+Searching "ילד רץ" (a boy running) with NVIDIA HebCLIP, no translation step:
+
+![HebCLIP search](docs/text-search-hebclip.png)
+
+Image-to-image search: upload a photo and get the most similar images:
+
+![Image search](docs/image-search.png)
+
+</details>
 
 ## How it works
 
