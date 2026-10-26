@@ -39,17 +39,18 @@ Text-to-image retrieval on the Flickr30k 1K test set (1,000 images, 5,000 captio
 | Hebrew direct, multilingual CLIP | B/32 | 30.40 | 55.68 | 66.52 |
 | English reference | L/14 | 64.58 | 87.08 | 92.08 |
 | Hebrew → translate → CLIP | L/14 | **60.74** | **83.40** | **89.58** |
-| Hebrew direct, NVIDIA HebCLIP | L/14 | TBD | TBD | TBD |
+| Hebrew direct, NVIDIA HebCLIP | L/14 | 54.22 | 79.72 | 87.00 |
 
 ### Findings
 
 - **Translation clearly beats the multilingual model.** With the same image encoder, translate-then-CLIP finds the correct image first 54.6% of the time, versus 30.4% for the multilingual model.
+- **HebCLIP is far stronger than the multilingual model, but translation still leads.** HebCLIP reaches 54.2 R@1 with no translation step, close to translate-then-CLIP with the smaller B/32 encoder. With the same L/14 encoder, the translation pipeline is ahead by about 6.5 points. Part of that gap may come from the evaluation setup (see Limitations), since HebCLIP never sees the original English sentence.
 - **Hebrew costs about 4 points.** With either image encoder, the translation pipeline lands roughly 4 points of R@1 below the English upper bound.
 - **The larger image encoder helps everywhere.** ViT-L/14 adds about 6 points of R@1 over ViT-B/32, in English and in Hebrew alike.
 
 ### Limitations
 
-The Hebrew queries were produced by machine-translating the English Flickr30k captions (`opus-mt-en-he`). This may favor the translate-back pipeline, since translating back partly recovers the original English sentence. A different model was used for the back-translation to reduce this effect. A sample of 100 captions is provided in `manual_review.csv` for rewriting into natural Hebrew, as a cleaner check.
+The Hebrew queries were produced by machine-translating the English Flickr30k captions (`opus-mt-en-he`). This may favor the translate-back pipeline, since translating back partly recovers the original English sentence. A different model was used for the back-translation to reduce this effect, but the direct-Hebrew models (HebCLIP, multilingual CLIP) get no such help, so the comparison likely flatters the translation pipeline. A sample of 100 captions is provided in `manual_review.csv` for rewriting into natural Hebrew, as a cleaner check.
 
 ## Project structure
 
